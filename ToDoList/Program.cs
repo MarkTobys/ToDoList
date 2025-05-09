@@ -16,7 +16,7 @@ namespace ToDoList
             string taskName; // used to store a task name for dictionary entry/access/deletion as the primary key
             string description; // used to store a task description for dictionary entry 
             string dueDate; // string to store due date for task
-            bool exitApp = false; // a boolean used to determine whether to close the application
+            
             DateTime date; // optional due date for task
             // dictionary used to store tasks (keys) and descriptions
             Dictionary<string, Item> taskList = new Dictionary<string, Item>();
@@ -26,14 +26,13 @@ namespace ToDoList
             {
                 Console.Write("You currently have no current tasks, would you like to add a task? ");
                 input = Console.ReadLine();
-                exitApp = YesNo(input);
                 // exit the application if the user answers no
-                if (!exitApp)
+                if (!YesNo(input))
                 {
                     // wait 3 seconds and close the program
                     Console.Write("Goodbye");
                     Thread.Sleep(2000);
-                    System.Environment.Exit(1);
+                    Environment.Exit(1);
                 }
                 // get task information otherwise
                 Console.Write("Enter a name for your task: ");
@@ -44,22 +43,12 @@ namespace ToDoList
             }
             // print all the current tasks the user has stored
             // this is created with a "simulated" selection screen which uses an index based cursor and refreshes with screen clears
-            Console.Clear();
             int taskIndex = 0;
             // get all the current task names to print 
             string[] tasks = taskList.Keys.ToArray(); // an array containing the primary keys and names of all current tasks
-            // print the initial selection screen
-            Console.WriteLine("Please select a task from the following or press N to create a new task");
-            for (int i = 0; i < tasks.Length; i++)
-            {
-                if (i == taskIndex)
-                {
-                    Console.Write(">");
-                }
-                Console.WriteLine(tasks[i]);
-            }
+            drawTaskScreen(taskIndex, tasks);
             // while the user has not chosen to exit the application (by pressing the escape key) run this loop indefinitely
-            exitApp = false; // reset exitApp to false in the instance that on startup there were 0 tasks
+            bool exitApp = false; // boolean used to keep the program running while the user has not pressed escape
             while (!exitApp)
             {
                 // a flag to determine whether a valid button has been pressed 
@@ -83,16 +72,31 @@ namespace ToDoList
                 if (keyPressed.Key == ConsoleKey.N)
                 {
                     Console.Clear();
-                    // get task information otherwise
+                    bool validName = false;
                     Console.Write("Enter a name for your task: ");
                     taskName = Console.ReadLine();
+                    while (!validName)
+                    {
+                        // check for duplicate tasks of that name
+                        if (checkValidName(taskList, taskName))
+                        {
+                            validName = true;
+                        }
+                        else
+                        {
+                            Console.Clear();
+                            Console.WriteLine("A task already exists under that name, please create a task with a new name");
+                            // prompt the user to enter a new task name
+                            Console.Write("Enter a name for your task: ");
+                            taskName = Console.ReadLine();
+                        }
+                    }
                     Console.Write("Enter a description for your task: ");
                     Item newTask = newItem();
                     taskList.Add(taskName, newTask);
                     tasks = taskList.Keys.ToArray(); // update the current tasks array to contain the new task
                     drawTaskScreen(taskIndex, tasks);
                 }
-
                 // if esc was pressed, exit the application
                 if (keyPressed.Key == ConsoleKey.Escape)
                 {
@@ -102,7 +106,7 @@ namespace ToDoList
             // close the application
             Console.Write("Goodbye");
             Thread.Sleep(2000);
-            System.Environment.Exit(1);
+            Environment.Exit(1);
         }
 
 
@@ -114,6 +118,7 @@ namespace ToDoList
         static void drawTaskScreen(int taskIndex, string[] tasks)
         {
             Console.Clear();
+            Console.WriteLine("Please select a task from the following or press N to create a new task");
             for (int i = 0; i < tasks.Length; i++)
             {
                 if (i == taskIndex)
@@ -165,6 +170,20 @@ namespace ToDoList
             return task;
         }
 
+        /*
+         * Checks to see if a task name is valid (not a duplicate) and returns true or false accordingly
+         * @param taskList: list of current tasks (keys) and their descriptions/due dates
+         * @param taskName: proposed task name (primary key) for a new task
+         * returns: false if a duplicate key is detected, otherwise true
+         */
+        static bool checkValidName(Dictionary<string, Item> taskList, string taskName)
+        {
+            if (taskList.ContainsKey(taskName))
+            {
+                return false;
+            }
+            return true;
+        }
         /* 
          * function used to parse user provided console input to parse a yes or no string input 
          * The function will convert the input to lowercase and truncate it to a single letter (so yes, no, y, n etc, answers are valid)
