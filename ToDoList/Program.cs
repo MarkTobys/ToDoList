@@ -173,6 +173,17 @@ namespace ToDoList
                             DrawTask(taskList, key); // refresh the screen to draw the new task
                             DrawTaskScreen(optionIndex, options, Menu.Options);
                             break;
+                        case 3: // delete item
+                            Console.Clear();
+                            Console.WriteLine("are you absolutely sure you want to delete this to do list entry?");
+                            Console.Write("Once you delete it, it can no longer be retrieved: ");
+                            string answer = Console.ReadLine();
+                            if(YesNo(answer))
+                            {
+                                taskList.Remove(key);
+                                goBack = true;
+                            }
+                            break;
                         case 4: // last option
                             goBack = true; 
                             break;
@@ -183,6 +194,11 @@ namespace ToDoList
             return taskList;
         }
         
+        /*
+         * Takes a new name provided to the user in EditName and creates a duplicate Item to return to taskScreen function
+         * @params taskList: list of existing tasks on the to do list
+         * @params key: current taskname and primary key 
+         */
         static (string, Item) NewName(Dictionary<string, Item> taskList, string key)
         {
             // promt user for a new task name
@@ -260,18 +276,25 @@ namespace ToDoList
          */
         static void DrawTaskScreen(int taskIndex, string[] tasks, Menu menuType)
         {
-            if (menuType.Equals(Menu.Tasks))
+            Console.Clear();
+            if (tasks.Length == 0)
             {
-                Console.Clear();
-                Console.WriteLine("Please select a task from the following or press N to create a new task");
-            }
-            for (int i = 0; i < tasks.Length; i++)
+                Console.WriteLine("You currently have no tasks to complete. Press N to create a new task");
+            } 
+            else 
             {
-                if (i == taskIndex)
-                {
-                    Console.Write(">");
+                if (menuType.Equals(Menu.Tasks))
+                { 
+                    Console.WriteLine("Please select a task from the following or press N to create a new task");
                 }
-                Console.WriteLine(tasks[i]);
+                for (int i = 0; i < tasks.Length; i++)
+                {
+                    if (i == taskIndex)
+                    {
+                        Console.Write(">");
+                    }
+                    Console.WriteLine(tasks[i]);
+                }
             }
         }
 
