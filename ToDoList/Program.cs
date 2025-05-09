@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 
-
+// Enum used to denote which menu type to draw when DrawTaskScreen is called
 enum Menu
 {
     Tasks,
@@ -14,17 +14,10 @@ namespace ToDoList
 {
     class Program
     {
-        /*
-         * UI which displays options, tasks and collects user input for viewing, adding, editing and deleting tasks
-         */
         static void Main(string[] args)
         {
             string input; // generic placeholder used to read in text for temporary processes
-            string taskName; // used to store a task name for dictionary entry/access/deletion as the primary key
-            string description; // used to store a task description for dictionary entry 
-            string dueDate; // string to store due date for task
-            
-            DateTime date; // optional due date for task
+            string taskName; // used to store a task name for dictionary entry/access/deletion as the primary 
             // dictionary used to store tasks (keys) and descriptions
             Dictionary<string, Item> taskList = new Dictionary<string, Item>();
             Console.WriteLine("Welcome to your to-do list");
@@ -36,7 +29,7 @@ namespace ToDoList
                 // exit the application if the user answers no
                 if (!YesNo(input))
                 {
-                    // wait 3 seconds and close the program
+                    // wait 2 seconds and close the program
                     Console.Write("Goodbye");
                     Thread.Sleep(2000);
                     Environment.Exit(1);
@@ -44,21 +37,17 @@ namespace ToDoList
                 // get task information otherwise
                 Console.Write("Enter a name for your task: ");
                 taskName = Console.ReadLine();
-                Console.Write("Enter a description for your task: ");
                 Item newTask = NewItem();
                 taskList.Add(taskName, newTask);
             }
             // print all the current tasks the user has stored
-            // this is created with a "simulated" selection screen which uses an index based cursor and refreshes with screen clears
-            int taskIndex = 0;
-            // get all the current task names to print 
+            int taskIndex = 0; // index to store > pointer location
             string[] tasks = taskList.Keys.ToArray(); // an array containing the primary keys and names of all current tasks
             DrawTaskScreen(taskIndex, tasks, Menu.Tasks);
             // while the user has not chosen to exit the application (by pressing the escape key) run this loop indefinitely
-            bool exitApp = false; // boolean used to keep the program running while the user has not pressed escape
+            bool exitApp = false; // flag used to keep the program running while the user has not pressed escape
             while (!exitApp)
-            {
-                // poll the keyboard for user input 
+            { 
                 ConsoleKeyInfo keyPressed;
                 keyPressed = Console.ReadKey();
                 // if a valid navigation button has been pressed, update the task screen
@@ -102,7 +91,6 @@ namespace ToDoList
                             taskName = Console.ReadLine();
                         }
                     }
-                    Console.Write("Enter a description for your task: ");
                     Item newTask = NewItem();
                     taskList.Add(taskName, newTask);
                     tasks = taskList.Keys.ToArray(); // update the current tasks array to contain the new task
@@ -164,7 +152,7 @@ namespace ToDoList
                     // if enter is pressed, check the index to determine which menu option was selected and act accordingly
                     switch (optionIndex)
                     {
-                        case 0:     // case 0, user selects edit 
+                        case 0:     // edit task name
                             Item newTask = new Item();
                             (string, Item) newEntry = NewName(taskList, key); // prompt user for a new task                          
                             taskList.Remove(key); // remove the old key from the dictionary   
@@ -173,15 +161,66 @@ namespace ToDoList
                             DrawTask(taskList, key); // refresh the screen to draw the new task
                             DrawTaskScreen(optionIndex, options, Menu.Options);
                             break;
+                        case 1:     // update task description
+                            Console.Clear();
+                            Console.WriteLine($"Current description: {taskList[key].Description}");
+                            Console.Write("Updated description: ");
+                            string newDesc = Console.ReadLine();
+                            taskList[key].Description = newDesc;
+                            DrawTask(taskList, key);
+                            DrawTaskScreen(optionIndex, options, Menu.Options);
+                            break;
+                        case 2:     // edit task date
+                            Console.Clear();
+                            if (taskList[key].DueDate != null)
+                            {
+                                Console.WriteLine($"Current date: {taskList[key].DueDate}");
+                            } else
+                            {
+                                Console.WriteLine("Task has no current due date");
+                            }
+                            Console.Write("New due date: ");
+                            string newDate = Console.ReadLine();
+                            DateTime? tempDate = null;
+                            bool validDate = false; // check to see if the date string provided is correct
+                            while (validDate == false)
+                                if (DateTime.TryParseExact(newDate, "dd/MM/yyyy", null, System.Globalization.DateTimeStyles.None, out DateTime parsedDate))
+                                {
+                                    if (parsedDate < DateTime.Now)
+                                    {
+                                        Console.Write("The due date for a task cannot be before the current date, please enter a valid date");
+                                        newDate = Console.ReadLine();
+                                    }
+                                    else
+                                    {
+                                        tempDate = parsedDate;
+                                        validDate = true;
+                                    }
+                                }
+                                else
+                                {
+                                    Console.WriteLine("You due date was not formatted correctly, it must be in the form dd/mm/yyyy");
+                                    Console.Write("Enter a due date for your task in the form of dd/mm/yyyy: ");
+                                    newDate = Console.ReadLine();
+                                }
+                            taskList[key].DueDate = tempDate;
+                            DrawTask(taskList, key); 
+                            DrawTaskScreen(optionIndex, options, Menu.Options);
+                            break;
                         case 3: // delete item
                             Console.Clear();
                             Console.WriteLine("are you absolutely sure you want to delete this to do list entry?");
                             Console.Write("Once you delete it, it can no longer be retrieved: ");
                             string answer = Console.ReadLine();
-                            if(YesNo(answer))
+                            if (YesNo(answer))
                             {
                                 taskList.Remove(key);
                                 goBack = true;
+                            }
+                            else
+                            {
+                                DrawTask(taskList, key);
+                                DrawTaskScreen(optionIndex, options, Menu.Options);
                             }
                             break;
                         case 4: // last option
@@ -268,7 +307,7 @@ namespace ToDoList
             Console.WriteLine();
             return;
         }
-
+        
         /* Function to refresh the menu selection for menu selection screens
          * Clears the current console and updates the console with the list of options/tasks and new location for the > pointer
          * @param taskIndex: the index used to determine which line to draw the > pointer on 
@@ -276,15 +315,16 @@ namespace ToDoList
          */
         static void DrawTaskScreen(int taskIndex, string[] tasks, Menu menuType)
         {
-            Console.Clear();
             if (tasks.Length == 0)
             {
+                Console.Clear();
                 Console.WriteLine("You currently have no tasks to complete. Press N to create a new task");
             } 
             else 
             {
                 if (menuType.Equals(Menu.Tasks))
-                { 
+                {
+                    Console.Clear();
                     Console.WriteLine("Please select a task from the following or press N to create a new task");
                 }
                 for (int i = 0; i < tasks.Length; i++)
@@ -306,6 +346,7 @@ namespace ToDoList
          */
         static Item NewItem()
         {
+            Console.Write("Enter a description for your task: ");
             Item task = new Item(); // the new task description and due date which will be returned
             string description = Console.ReadLine();
             Console.Write("would you like to add a due date for your task?: ");
@@ -319,8 +360,16 @@ namespace ToDoList
                 while (validDate == false)
                     if (DateTime.TryParseExact(dueDate, "dd/MM/yyyy", null, System.Globalization.DateTimeStyles.None, out DateTime parsedDate))
                     {
-                        tempDate = parsedDate;
-                        validDate = true;
+                        if (parsedDate < DateTime.Now)
+                        {
+                            Console.Write("The due date for a task cannot be before the current date, please enter a valid date: ");
+                            dueDate = Console.ReadLine();
+                        }
+                        else
+                        {
+                            tempDate = parsedDate;
+                            validDate = true;
+                        }
                     }
                     else
                     {
