@@ -16,6 +16,7 @@ namespace ToDoList
             string taskName; // used to store a task name for dictionary entry/access/deletion as the primary key
             string description; // used to store a task description for dictionary entry 
             string dueDate; // string to store due date for task
+            bool exitApp = false; // a boolean used to determine whether to close the application
             DateTime date; // optional due date for task
             // dictionary used to store tasks (keys) and descriptions
             Dictionary<string, Item> taskList = new Dictionary<string, Item>();
@@ -25,7 +26,7 @@ namespace ToDoList
             {
                 Console.Write("You currently have no current tasks, would you like to add a task? ");
                 input = Console.ReadLine();
-                bool exitApp = YesNo(input);
+                exitApp = YesNo(input);
                 // exit the application if the user answers no
                 if (!exitApp)
                 {
@@ -41,22 +42,86 @@ namespace ToDoList
                 Item newTask = newItem();
                 taskList.Add(taskName, newTask);
             }
-            // ask the user whether they would like to create a new task or edit/delete an existing one
+            // print all the current tasks the user has stored
             // this is created with a "simulated" selection screen which uses an index based cursor and refreshes with screen clears
             Console.Clear();
             int taskIndex = 0;
-            string[] options = {"Add", "Edit", "Delete"};
+            // get all the current task names to print 
+            string[] tasks = taskList.Keys.ToArray(); // an array containing the primary keys and names of all current tasks
             // print the initial selection screen
-            Console.WriteLine("Please select an option from the following");
-            for (int i = 0; i < 3; i++)
+            Console.WriteLine("Please select a task from the following or press N to create a new task");
+            for (int i = 0; i < tasks.Length; i++)
             {
                 if (i == taskIndex)
                 {
                     Console.Write(">");
                 }
-                Console.WriteLine(options[i]);
-            }           
+                Console.WriteLine(tasks[i]);
+            }
+            // while the user has not chosen to exit the application (by pressing the escape key) run this loop indefinitely
+            exitApp = false; // reset exitApp to false in the instance that on startup there were 0 tasks
+            while (!exitApp)
+            {
+                // a flag to determine whether a valid button has been pressed 
+                // poll the keyboard for user input 
+                ConsoleKeyInfo keyPressed;
+                keyPressed = Console.ReadKey();
+                // if a valid navigation button has been pressed, update the task screen
+                if (keyPressed.Key == ConsoleKey.DownArrow && taskIndex < tasks.Length - 1)
+                {
+                    taskIndex++;
+                    drawTaskScreen(taskIndex, tasks);
+                }
+                else if (keyPressed.Key == ConsoleKey.UpArrow && taskIndex > 0)
+                {
+                    taskIndex--;
+                    drawTaskScreen(taskIndex, tasks);
+                }
+                // if enter was pressed, navigate to the edit/remove task screen
 
+                // if n was pressed, navigate to the create new task screen
+                if (keyPressed.Key == ConsoleKey.N)
+                {
+                    Console.Clear();
+                    // get task information otherwise
+                    Console.Write("Enter a name for your task: ");
+                    taskName = Console.ReadLine();
+                    Console.Write("Enter a description for your task: ");
+                    Item newTask = newItem();
+                    taskList.Add(taskName, newTask);
+                    tasks = taskList.Keys.ToArray(); // update the current tasks array to contain the new task
+                    drawTaskScreen(taskIndex, tasks);
+                }
+
+                // if esc was pressed, exit the application
+                if (keyPressed.Key == ConsoleKey.Escape)
+                {
+                    exitApp = true;
+                }
+            }
+            // close the application
+            Console.Write("Goodbye");
+            Thread.Sleep(2000);
+            System.Environment.Exit(1);
+        }
+
+
+        /* Function to refresh the menu selection for the task selection screen
+         * Clears the current console and updates the console with the list of tasks and new location for the > pointer
+         * @param taskIndex: the index used to determine which line to draw the > pointer on 
+         * @param tasks: a list of tasks to be completed
+         */
+        static void drawTaskScreen(int taskIndex, string[] tasks)
+        {
+            Console.Clear();
+            for (int i = 0; i < tasks.Length; i++)
+            {
+                if (i == taskIndex)
+                {
+                    Console.Write(">");
+                }
+                Console.WriteLine(tasks[i]);
+            }
         }
 
         /* 
@@ -118,7 +183,7 @@ namespace ToDoList
             {
                 if (!input.Equals("y") && !input.Equals("n"))
                 {
-                    Console.WriteLine("Please provide a yes or no answer:");
+                    Console.Write("Please provide a yes or no answer: ");
                     input = Console.ReadLine();
                 }
                 else if (input.Equals("y"))
