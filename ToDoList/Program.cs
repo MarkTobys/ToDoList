@@ -45,7 +45,7 @@ namespace ToDoList
                 Console.Write("Enter a name for your task: ");
                 taskName = Console.ReadLine();
                 Console.Write("Enter a description for your task: ");
-                Item newTask = newItem();
+                Item newTask = NewItem();
                 taskList.Add(taskName, newTask);
             }
             // print all the current tasks the user has stored
@@ -53,7 +53,7 @@ namespace ToDoList
             int taskIndex = 0;
             // get all the current task names to print 
             string[] tasks = taskList.Keys.ToArray(); // an array containing the primary keys and names of all current tasks
-            drawTaskScreen(taskIndex, tasks, Menu.Tasks);
+            DrawTaskScreen(taskIndex, tasks, Menu.Tasks);
             // while the user has not chosen to exit the application (by pressing the escape key) run this loop indefinitely
             bool exitApp = false; // boolean used to keep the program running while the user has not pressed escape
             while (!exitApp)
@@ -65,19 +65,19 @@ namespace ToDoList
                 if (keyPressed.Key == ConsoleKey.DownArrow && taskIndex < tasks.Length - 1)
                 {
                     taskIndex++;
-                    drawTaskScreen(taskIndex, tasks, Menu.Tasks);
+                    DrawTaskScreen(taskIndex, tasks, Menu.Tasks);
                 }
                 else if (keyPressed.Key == ConsoleKey.UpArrow && taskIndex > 0)
                 {
                     taskIndex--;
-                    drawTaskScreen(taskIndex, tasks, Menu.Tasks);
+                    DrawTaskScreen(taskIndex, tasks, Menu.Tasks);
                 }
                 // if enter was pressed, navigate to the edit/remove task screen
                 else if (keyPressed.Key == ConsoleKey.Enter)
                 {
                     taskList = taskScreen(taskList, tasks[taskIndex]);
                     tasks = taskList.Keys.ToArray(); // update the tasks (keys) 
-                    drawTaskScreen(taskIndex, tasks, Menu.Tasks);
+                    DrawTaskScreen(taskIndex, tasks, Menu.Tasks);
                 }
                 // if n was pressed, navigate to the create new task screen
                 else if (keyPressed.Key == ConsoleKey.N)
@@ -89,7 +89,7 @@ namespace ToDoList
                     while (!validName)
                     {
                         // check for duplicate tasks of that name
-                        if (checkValidName(taskList, taskName))
+                        if (CheckValidName(taskList, taskName))
                         {
                             validName = true;
                         }
@@ -103,10 +103,10 @@ namespace ToDoList
                         }
                     }
                     Console.Write("Enter a description for your task: ");
-                    Item newTask = newItem();
+                    Item newTask = NewItem();
                     taskList.Add(taskName, newTask);
                     tasks = taskList.Keys.ToArray(); // update the current tasks array to contain the new task
-                    drawTaskScreen(taskIndex, tasks, Menu.Tasks);
+                    DrawTaskScreen(taskIndex, tasks, Menu.Tasks);
                 }
                 // if esc was pressed, exit the application
                 if (keyPressed.Key == ConsoleKey.Escape)
@@ -131,10 +131,10 @@ namespace ToDoList
         {
             // print the options for the current list
             int optionIndex = 0; // index representing the currently selected option
-            drawTask(taskList, key);
+            DrawTask(taskList, key);
             // get all the current task names to print 
             string[] options = { "Edit task name", "Edit task description", "Edit task due date", "Delete task", "Go back" };
-            drawTaskScreen(optionIndex, options, Menu.Options);
+            DrawTaskScreen(optionIndex, options, Menu.Options);
             // loop to handle all user interaction events
             bool goBack = false; // keeps the user in the edit task screen until they select go back or hit escape
             while (!goBack)
@@ -146,42 +146,35 @@ namespace ToDoList
                 if (keyPressed.Key == ConsoleKey.DownArrow && optionIndex < 4)
                 {
                     optionIndex++;
-                    drawTask(taskList, key);
-                    drawTaskScreen(optionIndex, options, Menu.Options);
+                    DrawTask(taskList, key);
+                    DrawTaskScreen(optionIndex, options, Menu.Options);
                 }
                 else if (keyPressed.Key == ConsoleKey.UpArrow && optionIndex > 0)
                 {
                     optionIndex--;
-                    drawTask(taskList, key);
-                    drawTaskScreen(optionIndex, options, Menu.Options);
-                } else if (keyPressed.Key == ConsoleKey.Escape)
+                    DrawTask(taskList, key);
+                    DrawTaskScreen(optionIndex, options, Menu.Options);
+                } 
+                else if (keyPressed.Key == ConsoleKey.Escape)
                 {
                     goBack = true; // return to the task list menu if escape is pressed
-                } else if (keyPressed.Key == ConsoleKey.Enter)
+                } 
+                else if (keyPressed.Key == ConsoleKey.Enter)
                 {
                     // if enter is pressed, check the index to determine which menu option was selected and act accordingly
                     switch (optionIndex)
                     {
-                        case 0:     // case 0, user selects edit name
-                            // promt user for a new task name
-                            string newName = editName(taskList, key);
-                            // temporarly store a copy of the desc and date (if it exists) and delete the old key pair from the dict
-                            string tempDesc = taskList[key].Description;
-                            DateTime? tempDate = null;
-                            if (taskList[key].DueDate != null)
-                            {
-                                tempDate = taskList[key].DueDate;
-                            }
-                            taskList.Remove(key);
-                            // create a new task and item pair and add them to the task list
+                        case 0:     // case 0, user selects edit 
                             Item newTask = new Item();
-                            newTask.Description = tempDesc;
-                            newTask.DueDate = tempDate;
-                            taskList.Add(newName, newTask);
-                            key = newName;
-                            // refresh the screen to draw the new task
-                            drawTask(taskList, key);
-                            drawTaskScreen(optionIndex, options, Menu.Options);
+                            (string, Item) newEntry = NewName(taskList, key); // prompt user for a new task                          
+                            taskList.Remove(key); // remove the old key from the dictionary   
+                            key = newEntry.Item1;
+                            taskList.Add(key, newEntry.Item2);
+                            DrawTask(taskList, key); // refresh the screen to draw the new task
+                            DrawTaskScreen(optionIndex, options, Menu.Options);
+                            break;
+                        case 4: // last option
+                            goBack = true; 
                             break;
                     }         
                         
@@ -190,13 +183,31 @@ namespace ToDoList
             return taskList;
         }
         
+        static (string, Item) NewName(Dictionary<string, Item> taskList, string key)
+        {
+            // promt user for a new task name
+            string newName = EditName(taskList, key);
+            // temporarly store a copy of the desc and date (if it exists) and delete the old key pair from the dict
+            string tempDesc = taskList[key].Description;
+            DateTime? tempDate = null;
+            if (taskList[key].DueDate != null)
+            {
+                tempDate = taskList[key].DueDate;
+            }
+            // create a new task and item pair and add them to the task list
+            Item newTask = new Item();
+            newTask.Description = tempDesc;
+            newTask.DueDate = tempDate;
+            return (newName, newTask);
+        }
+
         /* 
          * Function which allows the user to edit a tasks name (key) which is then returned and used to update the task list
          * @param name: string representing the current tasks name and primary key in the dictionary
          * @param taskList: dictionary of tasks used to determine if the new task name is valid to avoid duplicate keys
          * returns: updated string and primary key
          */
-        static string editName(Dictionary<string, Item> taskList, string name)
+        static string EditName(Dictionary<string, Item> taskList, string name)
         {
             // prompt the user to edit their task name
             Console.Clear();
@@ -207,7 +218,7 @@ namespace ToDoList
             bool validName = false;
             while (!validName)
             {
-                if (checkValidName(taskList, newName))
+                if (CheckValidName(taskList, newName))
                 {
                     validName = true;
                 } else
@@ -228,7 +239,7 @@ namespace ToDoList
          * @param taskList: dictionary of tasks on the to do list
          * @param key: string containing the name of the current information task being printed 
          */
-        static void drawTask(Dictionary<string, Item> taskList, string key)
+        static void DrawTask(Dictionary<string, Item> taskList, string key)
         {
             // display the current task, task description and due date
             Console.Clear();
@@ -247,7 +258,7 @@ namespace ToDoList
          * @param taskIndex: the index used to determine which line to draw the > pointer on 
          * @param tasks: a list of tasks/options to be selected
          */
-        static void drawTaskScreen(int taskIndex, string[] tasks, Menu menuType)
+        static void DrawTaskScreen(int taskIndex, string[] tasks, Menu menuType)
         {
             if (menuType.Equals(Menu.Tasks))
             {
@@ -270,7 +281,7 @@ namespace ToDoList
          * date format. A new Item is created using this information and then returned to the main function
          * @returns newTask, an Item class containing a description and valid dd/mm/yyyy datetime
          */
-        static Item newItem()
+        static Item NewItem()
         {
             Item task = new Item(); // the new task description and due date which will be returned
             string description = Console.ReadLine();
@@ -311,7 +322,7 @@ namespace ToDoList
          * @param taskName: proposed task name (primary key) for a new task
          * returns: false if a duplicate key is detected, otherwise true
          */
-        static bool checkValidName(Dictionary<string, Item> taskList, string taskName)
+        static bool CheckValidName(Dictionary<string, Item> taskList, string taskName)
         {
             if (taskList.ContainsKey(taskName))
             {
