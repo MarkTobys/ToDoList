@@ -75,7 +75,9 @@ namespace ToDoList
                 // if enter was pressed, navigate to the edit/remove task screen
                 else if (keyPressed.Key == ConsoleKey.Enter)
                 {
-                    taskList = taskScreen(taskList, tasks[taskIndex]);                                                                                                                                                                                                                                                         
+                    taskList = taskScreen(taskList, tasks[taskIndex]);
+                    tasks = taskList.Keys.ToArray(); // update the tasks (keys) 
+                    drawTaskScreen(taskIndex, tasks, Menu.Tasks);
                 }
                 // if n was pressed, navigate to the create new task screen
                 else if (keyPressed.Key == ConsoleKey.N)
@@ -152,9 +154,73 @@ namespace ToDoList
                     optionIndex--;
                     drawTask(taskList, key);
                     drawTaskScreen(optionIndex, options, Menu.Options);
+                } else if (keyPressed.Key == ConsoleKey.Escape)
+                {
+                    goBack = true; // return to the task list menu if escape is pressed
+                } else if (keyPressed.Key == ConsoleKey.Enter)
+                {
+                    // if enter is pressed, check the index to determine which menu option was selected and act accordingly
+                    switch (optionIndex)
+                    {
+                        case 0:     // case 0, user selects edit name
+                            // promt user for a new task name
+                            string newName = editName(taskList, key);
+                            // temporarly store a copy of the desc and date (if it exists) and delete the old key pair from the dict
+                            string tempDesc = taskList[key].Description;
+                            DateTime? tempDate = null;
+                            if (taskList[key].DueDate != null)
+                            {
+                                tempDate = taskList[key].DueDate;
+                            }
+                            taskList.Remove(key);
+                            // create a new task and item pair and add them to the task list
+                            Item newTask = new Item();
+                            newTask.Description = tempDesc;
+                            newTask.DueDate = tempDate;
+                            taskList.Add(newName, newTask);
+                            key = newName;
+                            // refresh the screen to draw the new task
+                            drawTask(taskList, key);
+                            drawTaskScreen(optionIndex, options, Menu.Options);
+                            break;
+                    }         
+                        
                 }
             }
             return taskList;
+        }
+        
+        /* 
+         * Function which allows the user to edit a tasks name (key) which is then returned and used to update the task list
+         * @param name: string representing the current tasks name and primary key in the dictionary
+         * @param taskList: dictionary of tasks used to determine if the new task name is valid to avoid duplicate keys
+         * returns: updated string and primary key
+         */
+        static string editName(Dictionary<string, Item> taskList, string name)
+        {
+            // prompt the user to edit their task name
+            Console.Clear();
+            Console.WriteLine($"Current name: {name}");
+            Console.Write("New name: ");
+            string newName = Console.ReadLine();
+            // check to see if the updated name is a duplicate key
+            bool validName = false;
+            while (!validName)
+            {
+                if (checkValidName(taskList, newName))
+                {
+                    validName = true;
+                } else
+                {
+                    Console.Clear();
+                    Console.WriteLine("A task already exists under that name, please create a task with a new name");
+                    // prompt the user to enter a new task name
+                    Console.Write("Edit the name of your task: ");
+                    Console.Write(name);
+                    newName = Console.ReadLine();
+                }
+            }
+            return newName;
         }
 
         /*
@@ -167,11 +233,12 @@ namespace ToDoList
             // display the current task, task description and due date
             Console.Clear();
             Console.WriteLine($"Task name: {key}");
-            Console.WriteLine($"Task Description {taskList[key].Description}");
+            Console.WriteLine($"Task Description: {taskList[key].Description}");
             if (taskList[key].DueDate != null)
             {
-                Console.WriteLine(taskList[key].DueDate);
+                Console.WriteLine($"due date: {taskList[key].DueDate}");
             }
+            Console.WriteLine();
             return;
         }
 
