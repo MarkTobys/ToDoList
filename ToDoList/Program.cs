@@ -3,6 +3,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 
+
+enum Menu
+{
+    Tasks,
+    Options
+}
+
 namespace ToDoList
 {
     class Program
@@ -46,7 +53,8 @@ namespace ToDoList
             int taskIndex = 0;
             // get all the current task names to print 
             string[] tasks = taskList.Keys.ToArray(); // an array containing the primary keys and names of all current tasks
-            drawTaskScreen(taskIndex, tasks);
+            Console.Clear();
+            drawTaskScreen(taskIndex, tasks, Menu.Tasks);
             // while the user has not chosen to exit the application (by pressing the escape key) run this loop indefinitely
             bool exitApp = false; // boolean used to keep the program running while the user has not pressed escape
             while (!exitApp)
@@ -59,17 +67,22 @@ namespace ToDoList
                 if (keyPressed.Key == ConsoleKey.DownArrow && taskIndex < tasks.Length - 1)
                 {
                     taskIndex++;
-                    drawTaskScreen(taskIndex, tasks);
+                    Console.Clear();
+                    drawTaskScreen(taskIndex, tasks, Menu.Tasks);
                 }
                 else if (keyPressed.Key == ConsoleKey.UpArrow && taskIndex > 0)
                 {
                     taskIndex--;
-                    drawTaskScreen(taskIndex, tasks);
+                    Console.Clear();
+                    drawTaskScreen(taskIndex, tasks, Menu.Tasks);
                 }
                 // if enter was pressed, navigate to the edit/remove task screen
-
+                else if (keyPressed.Key == ConsoleKey.Enter)
+                {
+                    taskList = taskScreen(taskList, tasks[taskIndex]);                                                                                                                                                                                                                                                         
+                }
                 // if n was pressed, navigate to the create new task screen
-                if (keyPressed.Key == ConsoleKey.N)
+                else if (keyPressed.Key == ConsoleKey.N)
                 {
                     Console.Clear();
                     bool validName = false;
@@ -95,7 +108,7 @@ namespace ToDoList
                     Item newTask = newItem();
                     taskList.Add(taskName, newTask);
                     tasks = taskList.Keys.ToArray(); // update the current tasks array to contain the new task
-                    drawTaskScreen(taskIndex, tasks);
+                    drawTaskScreen(taskIndex, tasks, Menu.Tasks);
                 }
                 // if esc was pressed, exit the application
                 if (keyPressed.Key == ConsoleKey.Escape)
@@ -109,16 +122,43 @@ namespace ToDoList
             Environment.Exit(1);
         }
 
-
-        /* Function to refresh the menu selection for the task selection screen
-         * Clears the current console and updates the console with the list of tasks and new location for the > pointer
-         * @param taskIndex: the index used to determine which line to draw the > pointer on 
-         * @param tasks: a list of tasks to be completed
+        /*
+         * Function used to display and interact with a task which has been selected form the navigation menu
+         * Users can delete tasks and edit the name, description and due date on this screen 
+         * @params taskList: a list of all the tasks on the to do list
+         * @params index: the index of the selected task 
+         * returns: a dictionary containing a list of all tasks post update
          */
-        static void drawTaskScreen(int taskIndex, string[] tasks)
+        static Dictionary<string, Item> taskScreen(Dictionary<string, Item> taskList, string key)
         {
+            // display the current task, task description and due date
             Console.Clear();
-            Console.WriteLine("Please select a task from the following or press N to create a new task");
+            Console.WriteLine($"Task name: {key}");
+            Console.WriteLine($"Task Description {taskList[key].Description}");
+            if (taskList[key].DueDate != null)
+            {
+                Console.WriteLine(taskList[key].DueDate);
+            }
+            // print the options for the current list
+            int optionIndex = 0; // index representing the currently selected option
+            // get all the current task names to print 
+            string[] options = { "Edit task name", "Edit task description", "Edit task due date", "Delete task", "Go back" };
+            drawTaskScreen(optionIndex, options, Menu.Options);
+            
+            return taskList;
+        }
+
+        /* Function to refresh the menu selection for menu selection screens
+         * Clears the current console and updates the console with the list of options/tasks and new location for the > pointer
+         * @param taskIndex: the index used to determine which line to draw the > pointer on 
+         * @param tasks: a list of tasks/options to be selected
+         */
+        static void drawTaskScreen(int taskIndex, string[] tasks, Menu menuType)
+        {
+            if (menuType.Equals(Menu.Tasks))
+            {
+                Console.WriteLine("Please select a task from the following or press N to create a new task");
+            }
             for (int i = 0; i < tasks.Length; i++)
             {
                 if (i == taskIndex)
