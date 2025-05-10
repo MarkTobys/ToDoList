@@ -16,6 +16,7 @@ namespace ToDoList
     {
         static void Main(string[] args)
         {
+            Console.Clear(); // clear the screen after the app is launched
             string input; // generic placeholder used to read in text for temporary processes
             string taskName; // used to store a task name for dictionary entry/access/deletion as the primary 
             // dictionary used to store tasks (keys) and descriptions
@@ -49,7 +50,7 @@ namespace ToDoList
             while (!exitApp)
             { 
                 ConsoleKeyInfo keyPressed;
-                keyPressed = Console.ReadKey();
+                keyPressed = Console.ReadKey(intercept:true);
                 // if a valid navigation button has been pressed, update the task screen
                 if (keyPressed.Key == ConsoleKey.DownArrow && taskIndex < tasks.Length - 1)
                 {
@@ -188,7 +189,7 @@ namespace ToDoList
                                 {
                                     if (parsedDate < DateTime.Now)
                                     {
-                                        Console.Write("The due date for a task cannot be before the current date, please enter a valid date");
+                                        Console.Write("The due date for a task cannot be before the current date, please enter a valid date: ");
                                         newDate = Console.ReadLine();
                                     }
                                     else
