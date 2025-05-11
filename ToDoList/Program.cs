@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using System.IO;
 
 // Enum used to denote which menu type to draw when DrawTaskScreen is called
 enum Menu
@@ -20,7 +21,7 @@ namespace ToDoList
             string input; // generic placeholder used to read in text for temporary processes
             string taskName; // used to store a task name for dictionary entry/access/deletion as the primary 
             // dictionary used to store tasks (keys) and descriptions
-            Dictionary<string, Item> taskList = new Dictionary<string, Item>();
+            Dictionary<string, Item> taskList = ReadSavedData();
             Console.WriteLine("Welcome to your to-do list");
             // check to see if there are any existing tasks, if not, prompt whether the user would like to create one
             if (taskList.Count == 0)
@@ -256,6 +257,41 @@ namespace ToDoList
             newTask.DueDate = tempDate;
             return (newName, newTask);
         }
+
+        /*
+        *   Function which searches for ToDoList.txt CSV file and reads the contents to create the task dictionary for the program, returning
+        *   an empty library if the file cannot be found or is empty otherwise
+        *   @returns: a Dictionary with a string type as the primary key and Item as contents with the information from ToDoList.txt, or empty if there is no file/file is empty
+        */
+        static Dictionary<string, Item> ReadSavedData() 
+        {
+            string fileName = "ToDoList.txt";
+            Dictionary<string, Item> taskList = new Dictionary<string, Item>(); 
+            // search for the ToDoList.txt file and create one if it does not exist
+            if (File.Exists("ToDoList.txt")) {
+                // read in each line of the to do list, parsing the CSV's and adding them to the dictionary
+                // Keep in mind there is no error checking in place for file reading so any manual changes made to ToDoList.txt may cause crashes
+                using (StreamReader reader = new StreamReader(fileName))
+                {
+                    string line;
+                    while ((line = reader.ReadLine()) != null)
+                    {
+                        string[] values = line.Split(',');
+                        Item tempItem = new Item();
+                        tempItem.Description = values[1]; // 2nd value is the description 
+                        DateTime.TryParseExact(values[2], "dd/MM/yyyy", null, System.Globalization.DateTimeStyles.None, out DateTime parsedDate); // 3rd value is datetime
+                        tempItem.DueDate = parsedDate;
+                        taskList.Add(values[0], tempItem);
+                    }
+                }
+            } 
+            else 
+            {
+                File.Create(fileName).Dispose(); // create the file if it does not exist
+            }
+            return taskList;
+        }
+        
 
         /* 
          * Function which allows the user to edit a tasks name (key) which is then returned and used to update the task list
