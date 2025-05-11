@@ -41,6 +41,7 @@ namespace ToDoList
                 taskName = Console.ReadLine();
                 Item newTask = NewItem();
                 taskList.Add(taskName, newTask);
+                SaveData(taskList);
             }
             // print all the current tasks the user has stored
             int taskIndex = 0; // index to store > pointer location
@@ -183,29 +184,33 @@ namespace ToDoList
                             {
                                 Console.WriteLine("Task has no current due date");
                             }
-                            Console.Write("New due date: ");
+                            Console.Write("New due date (enter 'null' if you wish to remove the current due date): ");
                             string newDate = Console.ReadLine();
                             DateTime? tempDate = null;
                             bool validDate = false; // check to see if the date string provided is correct
                             while (validDate == false)
-                                if (DateTime.TryParseExact(newDate, "dd/MM/yyyy", null, System.Globalization.DateTimeStyles.None, out DateTime parsedDate))
-                                {
-                                    if (parsedDate < DateTime.Now)
+                                if (newDate == "null") {
+                                    break;
+                                } else {
+                                    if (DateTime.TryParseExact(newDate, "dd/MM/yyyy", null, System.Globalization.DateTimeStyles.None, out DateTime parsedDate))
                                     {
-                                        Console.Write("The due date for a task cannot be before the current date, please enter a valid date: ");
-                                        newDate = Console.ReadLine();
+                                        if (parsedDate < DateTime.Now)
+                                        {
+                                            Console.Write("The due date for a task cannot be before the current date, please enter a valid date: ");
+                                            newDate = Console.ReadLine();
+                                        }
+                                        else
+                                        {
+                                            tempDate = parsedDate;
+                                            validDate = true;
+                                        }
                                     }
                                     else
                                     {
-                                        tempDate = parsedDate;
-                                        validDate = true;
+                                        Console.WriteLine("You due date was not formatted correctly, it must be in the form dd/mm/yyyy");
+                                        Console.Write("Enter a due date for your task in the form of dd/mm/yyyy: ");
+                                        newDate = Console.ReadLine();
                                     }
-                                }
-                                else
-                                {
-                                    Console.WriteLine("You due date was not formatted correctly, it must be in the form dd/mm/yyyy");
-                                    Console.Write("Enter a due date for your task in the form of dd/mm/yyyy: ");
-                                    newDate = Console.ReadLine();
                                 }
                             taskList[key].DueDate = tempDate;
                             DrawTask(taskList, key); 
@@ -278,7 +283,7 @@ namespace ToDoList
                     string line;
                     while ((line = reader.ReadLine()) != null)
                     {
-                        string[] values = line.Split(',');
+                        string[] values = line.Split('|');
                         Item tempItem = new Item();
                         tempItem.Description = values[1]; // 2nd value is the description 
                         if (values[2] == "null") {
@@ -316,7 +321,7 @@ namespace ToDoList
                         if (taskList[currentTask].DueDate != null) {
                             due = task.Value.DueDate.ToString();
                         }
-                        writer.WriteLine($"{currentTask}, {description}, {due}");
+                        writer.WriteLine($"{currentTask}|{description}|{due}");
                     }
                 }
         }
