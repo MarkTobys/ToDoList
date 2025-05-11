@@ -70,6 +70,7 @@ namespace ToDoList
                     taskList = taskScreen(taskList, tasks[taskIndex]);
                     tasks = taskList.Keys.ToArray(); // update the tasks (keys) 
                     SaveData(taskList); // update the save data 
+                    taskIndex = 0; // update the task index back to zero to avoid OOB glitches
                     DrawTaskScreen(taskIndex, tasks, Menu.Tasks);
                 }
                 // if n was pressed, navigate to the create new task screen
