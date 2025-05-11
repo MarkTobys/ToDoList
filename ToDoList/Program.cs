@@ -68,6 +68,7 @@ namespace ToDoList
                 {
                     taskList = taskScreen(taskList, tasks[taskIndex]);
                     tasks = taskList.Keys.ToArray(); // update the tasks (keys) 
+                    SaveData(taskList); // update the save data 
                     DrawTaskScreen(taskIndex, tasks, Menu.Tasks);
                 }
                 // if n was pressed, navigate to the create new task screen
@@ -96,6 +97,7 @@ namespace ToDoList
                     Item newTask = NewItem();
                     taskList.Add(taskName, newTask);
                     tasks = taskList.Keys.ToArray(); // update the current tasks array to contain the new task
+                    SaveData(taskList); // update the save data 
                     DrawTaskScreen(taskIndex, tasks, Menu.Tasks);
                 }
                 // if esc was pressed, exit the application
@@ -279,8 +281,12 @@ namespace ToDoList
                         string[] values = line.Split(',');
                         Item tempItem = new Item();
                         tempItem.Description = values[1]; // 2nd value is the description 
-                        DateTime.TryParseExact(values[2], "dd/MM/yyyy", null, System.Globalization.DateTimeStyles.None, out DateTime parsedDate); // 3rd value is datetime
-                        tempItem.DueDate = parsedDate;
+                        if (values[2] == "null") {
+                            tempItem.DueDate = null;
+                        } else {
+                            DateTime.TryParseExact(values[2], "dd/MM/yyyy", null, System.Globalization.DateTimeStyles.None, out DateTime parsedDate); // 3rd value is datetime
+                            tempItem.DueDate = parsedDate;
+                        }
                         taskList.Add(values[0], tempItem);
                     }
                 }
@@ -292,6 +298,28 @@ namespace ToDoList
             return taskList;
         }
         
+        /*
+        *   Function which saves the current state of the taskList to ToDoList.txt in a CSV format, formatted as task name, task description, task date
+        */
+        static void SaveData(Dictionary<string, Item> taskList) 
+        {
+            // overwrite the existing ToDoList.txt
+            using (StreamWriter writer = new StreamWriter("ToDoList.txt", append: false))
+                {
+                    // iterate through each task in taskList
+                    foreach (var task in taskList)
+                    {
+                        string currentTask = task.Key;
+                        string description = task.Value.Description;
+                        // check to see if the due date is null or a date, if it is a date convert it to a string, otherwise store the due date as "null"
+                        string due = "null"; // by default, set due to null in the instance that no due date is provided
+                        if (taskList[currentTask].DueDate != null) {
+                            due = task.Value.DueDate.ToString();
+                        }
+                        writer.WriteLine($"{currentTask}, {description}, {due}");
+                    }
+                }
+        }
 
         /* 
          * Function which allows the user to edit a tasks name (key) which is then returned and used to update the task list
